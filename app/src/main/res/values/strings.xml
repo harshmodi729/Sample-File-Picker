@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">File Selector</string>
+    <string name="oen_image">Oen Image</string>
+    <string name="upload">Upload</string>
+</resources>
