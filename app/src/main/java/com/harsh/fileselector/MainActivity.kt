@@ -36,35 +36,7 @@ class MainActivity : AppCompatActivity() {
         viewModel.getImages(appDB, "not")
 
         btnOpenImage.setOnClickListener {
-            Dexter.withContext(this)
-                .withPermissions(
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-                .withListener(object : MultiplePermissionsListener {
-                    override fun onPermissionsChecked(response: MultiplePermissionsReport?) {
-                        if (response?.isAnyPermissionPermanentlyDenied!!) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "You can not open image picker without this permission.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        if (response.areAllPermissionsGranted()) {
-                            FilePickerBuilder.instance
-                                .setMaxCount(5)
-                                .setSelectedFiles(uris)
-                                .pickPhoto(this@MainActivity)
-                        }
-                    }
-
-                    override fun onPermissionRationaleShouldBeShown(
-                        permissionRequest: MutableList<PermissionRequest>?,
-                        token: PermissionToken?
-                    ) {
-                        token?.continuePermissionRequest()
-                    }
-                }).check()
+            checkStoragePermission()
         }
 
         btnUploadImage.setOnClickListener {
@@ -87,6 +59,44 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             })
+    }
+
+    private fun checkStoragePermission() {
+        Dexter.withContext(this)
+            .withPermissions(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+            .withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(response: MultiplePermissionsReport?) {
+                    if (response?.areAllPermissionsGranted()!!) {
+                        FilePickerBuilder.instance
+                            .setMaxCount(5)
+                            .setSelectedFiles(uris)
+                            .pickPhoto(this@MainActivity)
+                    } else {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "You have denied the permission.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    if (response.isAnyPermissionPermanentlyDenied) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "You can not open image picker without this permission.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                override fun onPermissionRationaleShouldBeShown(
+                    permissionRequest: MutableList<PermissionRequest>?,
+                    token: PermissionToken?
+                ) {
+                    token?.continuePermissionRequest()
+                }
+            }).check()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
