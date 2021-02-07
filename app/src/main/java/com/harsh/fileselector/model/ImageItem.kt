@@ -1,9 +1,8 @@
-package com.harsh.fileselector
+package com.harsh.fileselector.model
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room.*
+import java.io.File
+import java.io.Serializable
 
 @Entity(tableName = "image_item", indices = [Index(value = ["path"], unique = true)])
 data class ImageItem(
@@ -14,4 +13,7 @@ data class ImageItem(
     val path: String = "",
     @ColumnInfo(name = "synced")
     var synced: String = ""
-)
+) : Serializable {
+    @Ignore
+    var imageFile: File? = null
+}

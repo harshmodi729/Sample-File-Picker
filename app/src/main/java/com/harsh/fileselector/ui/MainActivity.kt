@@ -1,12 +1,18 @@
-package com.harsh.fileselector
+package com.harsh.fileselector.ui
 
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import com.harsh.fileselector.R
+import com.harsh.fileselector.base.BaseActivity
+import com.harsh.fileselector.model.ImageItem
+import com.harsh.fileselector.service.UploadImageService
+import com.harsh.fileselector.viewmodel.ImageViewModel
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -16,20 +22,20 @@ import droidninja.filepicker.FilePickerBuilder
 import droidninja.filepicker.FilePickerConst
 import droidninja.filepicker.utils.ContentUriUtils
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.File
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private lateinit var viewModel: ImageViewModel
-    private lateinit var appDB: AppDatabase
     private var uris = ArrayList<Uri>()
     private var alPaths = ArrayList<String>()
+    private var alFiles = ArrayList<File>()
     private var isUploading = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        appDB = AppDatabase.getInstance(this)
         viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
             .create(ImageViewModel::class.java)
 
@@ -47,18 +53,45 @@ class MainActivity : AppCompatActivity() {
         viewModel.images.observe(this,
             {
                 it?.let { items ->
+                    items.forEach { item ->
+                        item.imageFile = File(item.path)
+                    }
                     if (isUploading) {
-                        items.forEach { image ->
-                            image.synced = "yes"
-                            viewModel.updateImage(appDB, image)
+//                        viewModel.uploadImage(appDB, retrofitClient, items as ArrayList<ImageItem>)
+                        val intent = Intent(this, UploadImageService::class.java)
+                        intent.putExtra("files", items as ArrayList<ImageItem>)
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            ContextCompat.startForegroundService(this, intent)
+                        } else {
+                            startService(intent)
                         }
-                        isUploading = false
-                        viewModel.getImages(appDB, "not")
                     } else {
+                        alFiles.clear()
+                        items.forEach { imagePath ->
+                            alFiles.add(imagePath.imageFile!!)
+                        }
                         tvPaths.text = items.size.toString()
                     }
                 }
             })
+
+        viewModel.uploadProgressLiveData.observe(this, {
+            progress.progress = it
+            Log.e("progress", it.toString())
+        })
+        viewModel.uploadFinishLiveData.observe(this, {
+            if (it == alFiles.size) {
+                isUploading = false
+                viewModel.getImages(appDB, "not")
+            }
+            progress.progress = 0
+            Log.e("finish", it.toString())
+        })
+        viewModel.uploadErrorLiveData.observe(this, {
+            isUploading = false
+            progress.progress = 0
+            Log.e("error", it)
+        })
     }
 
     private fun checkStoragePermission() {
@@ -107,8 +140,11 @@ class MainActivity : AppCompatActivity() {
                     uris =
                         data.getParcelableArrayListExtra(FilePickerConst.KEY_SELECTED_MEDIA)
                     alPaths.clear()
+                    alFiles.clear()
                     uris.forEach {
                         ContentUriUtils.getFilePath(this, it)?.let { path ->
+                            val file = File(path)
+                            alFiles.add(file)
                             alPaths.add(path)
                         }
                     }
@@ -120,8 +156,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun insertImages() {
-        alPaths.forEach {
-            viewModel.insertImage(appDB, ImageItem(path = it, synced = "not"))
+        for (i in 0 until alFiles.size) {
+            val item = ImageItem(path = alPaths[i], synced = "not")
+            item.imageFile = alFiles[i]
+            viewModel.insertImage(appDB, item)
         }
     }
 }

@@ -1,9 +1,10 @@
-package com.harsh.fileselector
+package com.harsh.fileselector.data
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.harsh.fileselector.model.ImageItem
 
 @Dao
 interface ImageDao {
@@ -11,7 +12,7 @@ interface ImageDao {
     suspend fun insertImage(item: ImageItem)
 
     @Update
-    suspend fun updateImage(item: ImageItem)
+    fun updateImage(item: ImageItem)
 
     @Query("SELECT * FROM image_item where synced = :status")
     suspend fun getStatusWiseImage(status: String): List<ImageItem>
