@@ -6,12 +6,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.harsh.fileselector.R
 import com.harsh.fileselector.base.BaseActivity
 import com.harsh.fileselector.model.ImageItem
-import com.harsh.fileselector.service.UploadImageService
 import com.harsh.fileselector.viewmodel.ImageViewModel
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
@@ -57,14 +55,14 @@ class MainActivity : BaseActivity() {
                         item.imageFile = File(item.path)
                     }
                     if (isUploading) {
-//                        viewModel.uploadImage(appDB, retrofitClient, items as ArrayList<ImageItem>)
-                        val intent = Intent(this, UploadImageService::class.java)
+                        viewModel.uploadImage(appDB, retrofitClient, items as ArrayList<ImageItem>)
+                        /*val intent = Intent(this, UploadImageService::class.java)
                         intent.putExtra("files", items as ArrayList<ImageItem>)
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                             ContextCompat.startForegroundService(this, intent)
                         } else {
                             startService(intent)
-                        }
+                        }*/
                     } else {
                         alFiles.clear()
                         items.forEach { imagePath ->

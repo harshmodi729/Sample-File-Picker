@@ -18,7 +18,9 @@ import com.harsh.fileselector.model.ImageItem
 import com.harsh.fileselector.model.UploadImage
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 
 class UploadImageService : IntentService("upload_image"), ProgressRequestBody.FileUploaderCallback {
@@ -62,7 +64,9 @@ class UploadImageService : IntentService("upload_image"), ProgressRequestBody.Fi
         val filePart =
             MultipartBody.Part.createFormData("file", item.imageFile!!.name, fileBody)
 
-        retrofitClient.uploadFile("/", filePart)
+        val textBody = "Sample Text".toRequestBody("text/plain".toMediaTypeOrNull())
+
+        retrofitClient.uploadFile("/", filePart, textBody)
             .subscribe(object : Observer<UploadImage?> {
                 override fun onSubscribe(d: Disposable?) {
 

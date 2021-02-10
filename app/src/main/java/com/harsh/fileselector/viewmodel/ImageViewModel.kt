@@ -13,7 +13,9 @@ import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class ImageViewModel : ViewModel(), ProgressRequestBody.FileUploaderCallback {
 
@@ -82,7 +84,9 @@ class ImageViewModel : ViewModel(), ProgressRequestBody.FileUploaderCallback {
         val filePart =
             MultipartBody.Part.createFormData("file", item.imageFile!!.name, fileBody)
 
-        retrofitClient.uploadFile("/", filePart)
+        val textBody = "Sample Text".toRequestBody("text/plain".toMediaTypeOrNull())
+
+        retrofitClient.uploadFile("/", filePart, textBody)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(object : Observer<UploadImage?> {
